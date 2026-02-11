@@ -7,6 +7,14 @@ from agent_memory.models import (
     Methodology,
     ErrorPattern,
 )
+from agent_memory.neo4j_store import Neo4jStore
 
 __version__ = "0.1.0"
-__all__ = ["Trajectory", "Fragment", "State", "Methodology", "ErrorPattern"]
+__all__ = [
+    "Trajectory",
+    "Fragment",
+    "State",
+    "Methodology",
+    "ErrorPattern",
+    "Neo4jStore",
+]
