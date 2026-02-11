@@ -22,6 +22,10 @@ from agent_memory.evaluation.swe_agent_tool import (
     QueryMemoryInput,
     QueryMemoryOutput,
 )
+from agent_memory.evaluation.analyzer import (
+    compare_results,
+    ComparisonReport,
+)
 
 __all__ = [
     "parse_swe_agent_trajectory",
@@ -36,4 +40,6 @@ __all__ = [
     "QueryMemoryTool",
     "QueryMemoryInput",
     "QueryMemoryOutput",
+    "compare_results",
+    "ComparisonReport",
 ]
