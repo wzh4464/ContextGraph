@@ -55,8 +55,6 @@ class MemoryRetriever:
         result = RetrievalResult()
 
         if not self.store:
-            # Return warnings even without store
-            result.warnings = self._get_warnings(current_state)
             return result
 
         # 1. Error-based retrieval
@@ -94,8 +92,10 @@ class MemoryRetriever:
         if not self.store:
             return []
 
-        error_type = self._extract_error_type(error_message)
-        query = self._build_error_query(error_type, error_message)
+        query = self._build_error_query(
+            error_type=self._extract_error_type(error_message),
+            error_message=error_message,
+        )
 
         results = self.store.execute_query(query)
         return [self._dict_to_methodology(r["m"]) for r in results if "m" in r]
@@ -226,7 +226,7 @@ class MemoryRetriever:
         if state.current_error:
             error_type = self._extract_error_type(state.current_error)
             if error_type:
-                warnings.append(f"Common mistake with {error_type}: Check import paths and module names carefully")
+                warnings.append(f"Common mistake with {error_type}: Check import paths carefully")
 
         return warnings
 
