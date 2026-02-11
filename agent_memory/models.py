@@ -50,17 +50,55 @@ class Trajectory:
         )
 
 
-# Placeholder classes to satisfy __init__.py imports
 @dataclass
 class Fragment:
-    """Placeholder - will be implemented in Task 1.3."""
+    """Key fragment from a trajectory - a meaningful sequence of steps."""
+
     id: str
-    step_range: Tuple[int, int] = (0, 0)
-    fragment_type: str = "exploration"
-    description: str = ""
-    action_sequence: List[str] = field(default_factory=list)
-    outcome: str = ""
+    step_range: Tuple[int, int]   # (start_step, end_step)
+    fragment_type: str            # error_recovery / exploration / successful_fix / failed_attempt / loop
+    description: str              # Natural language description
+    action_sequence: List[str]    # Abstract action types
+    outcome: str                  # Result of this fragment
     embedding: Optional[List[float]] = None
+
+    VALID_TYPES = frozenset([
+        "error_recovery",
+        "exploration",
+        "successful_fix",
+        "failed_attempt",
+        "loop",
+    ])
+
+    def __post_init__(self):
+        if self.fragment_type not in self.VALID_TYPES:
+            raise ValueError(f"Invalid fragment_type: {self.fragment_type}. Must be one of {self.VALID_TYPES}")
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "id": self.id,
+            "step_range": list(self.step_range),
+            "fragment_type": self.fragment_type,
+            "description": self.description,
+            "action_sequence": self.action_sequence,
+            "outcome": self.outcome,
+            "embedding": self.embedding,
+        }
+
+    @classmethod
+    def from_dict(cls, d: Dict[str, Any]) -> "Fragment":
+        step_range = d["step_range"]
+        if isinstance(step_range, list):
+            step_range = tuple(step_range)
+        return cls(
+            id=d["id"],
+            step_range=step_range,
+            fragment_type=d["fragment_type"],
+            description=d["description"],
+            action_sequence=d["action_sequence"],
+            outcome=d["outcome"],
+            embedding=d.get("embedding"),
+        )
 
 
 @dataclass

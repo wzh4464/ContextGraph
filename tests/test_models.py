@@ -32,3 +32,31 @@ class TestTrajectory:
         d = traj.to_dict()
         assert d["id"] == "traj_001"
         assert "embedding" in d
+
+
+class TestFragment:
+    def test_fragment_creation(self):
+        frag = Fragment(
+            id="frag_001",
+            step_range=(5, 12),
+            fragment_type="error_recovery",
+            description="Recovered from ImportError by fixing module path",
+            action_sequence=["search", "open", "edit"],
+            outcome="success",
+        )
+        assert frag.id == "frag_001"
+        assert frag.step_range == (5, 12)
+        assert frag.fragment_type == "error_recovery"
+
+    def test_fragment_types_valid(self):
+        valid_types = ["error_recovery", "exploration", "successful_fix", "failed_attempt", "loop"]
+        for ft in valid_types:
+            frag = Fragment(
+                id=f"frag_{ft}",
+                step_range=(0, 1),
+                fragment_type=ft,
+                description="test",
+                action_sequence=[],
+                outcome="test",
+            )
+            assert frag.fragment_type == ft
