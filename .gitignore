@@ -46,3 +46,13 @@ htmlcov/
 .mypy_cache/
 .dmypy.json
 dmypy.json
+swe_bench_experiments/
+
+# Git worktrees
+.worktrees/
+
+# A/B Test experiment data (generated, can be reproduced)
+experiments/ab_test/splits.json
+experiments/ab_test/training_graph.json
+experiments/ab_test/results/simulation_trajectories.json
+experiments/ab_test/results/experiment_*.json
