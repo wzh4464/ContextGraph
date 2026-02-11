@@ -103,13 +103,58 @@ class Fragment:
 
 @dataclass
 class State:
-    """Placeholder - will be implemented in Task 1.4."""
-    tools: List[str] = field(default_factory=list)
-    repo_summary: str = ""
-    task_description: str = ""
-    current_error: str = ""
-    phase: str = "understanding"
+    """Agent state snapshot - complete context at a point in time."""
+
+    tools: List[str]          # a. Available tools
+    repo_summary: str         # b. Repository overview
+    task_description: str     # c. Task description
+    current_error: str        # d. Current error message (empty if no error)
+    phase: str                # understanding / locating / fixing / testing
     embedding: Optional[List[float]] = None
+
+    VALID_PHASES = frozenset(["understanding", "locating", "fixing", "testing"])
+
+    def __post_init__(self):
+        if self.phase not in self.VALID_PHASES:
+            raise ValueError(f"Invalid phase: {self.phase}. Must be one of {self.VALID_PHASES}")
+
+    def to_situation_string(self) -> str:
+        """Convert state to a situation description string for matching."""
+        parts = [f"phase:{self.phase}"]
+        if self.current_error:
+            # Extract error type
+            error_type = self._extract_error_type(self.current_error)
+            parts.append(f"error:{error_type}")
+        parts.append(f"repo:{self.repo_summary[:50]}")
+        return " | ".join(parts)
+
+    def _extract_error_type(self, error_msg: str) -> str:
+        """Extract error type from error message."""
+        import re
+        # Match common Python error patterns
+        match = re.search(r'(\w+Error|\w+Exception|FAIL|ERROR)', error_msg)
+        return match.group(1) if match else "Unknown"
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "tools": self.tools,
+            "repo_summary": self.repo_summary,
+            "task_description": self.task_description,
+            "current_error": self.current_error,
+            "phase": self.phase,
+            "embedding": self.embedding,
+        }
+
+    @classmethod
+    def from_dict(cls, d: Dict[str, Any]) -> "State":
+        return cls(
+            tools=d["tools"],
+            repo_summary=d["repo_summary"],
+            task_description=d["task_description"],
+            current_error=d.get("current_error", ""),
+            phase=d["phase"],
+            embedding=d.get("embedding"),
+        )
 
 
 @dataclass

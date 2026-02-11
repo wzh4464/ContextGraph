@@ -60,3 +60,51 @@ class TestFragment:
                 outcome="test",
             )
             assert frag.fragment_type == ft
+
+
+class TestState:
+    def test_state_creation(self):
+        state = State(
+            tools=["bash", "search", "edit", "view"],
+            repo_summary="Django web framework, Python 3.8+",
+            task_description="Fix failing import in models.py",
+            current_error="ImportError: cannot import name 'Model'",
+            phase="fixing",
+        )
+        assert state.tools == ["bash", "search", "edit", "view"]
+        assert state.phase == "fixing"
+        assert "ImportError" in state.current_error
+
+    def test_state_to_situation_string(self):
+        state = State(
+            tools=["bash", "edit"],
+            repo_summary="Python web app",
+            task_description="Fix bug",
+            current_error="TypeError: NoneType",
+            phase="locating",
+        )
+        situation = state.to_situation_string()
+        assert "TypeError" in situation
+        assert "locating" in situation
+
+    def test_state_valid_phases(self):
+        valid_phases = ["understanding", "locating", "fixing", "testing"]
+        for phase in valid_phases:
+            state = State(
+                tools=["bash"],
+                repo_summary="test",
+                task_description="test",
+                current_error="",
+                phase=phase,
+            )
+            assert state.phase == phase
+
+    def test_state_invalid_phase_raises(self):
+        with pytest.raises(ValueError):
+            State(
+                tools=["bash"],
+                repo_summary="test",
+                task_description="test",
+                current_error="",
+                phase="invalid_phase",
+            )
