@@ -212,9 +212,37 @@ class Methodology:
 
 @dataclass
 class ErrorPattern:
-    """Placeholder - will be implemented in Task 1.6."""
-    id: str = ""
-    error_type: str = ""
-    error_keywords: List[str] = field(default_factory=list)
-    context: str = ""
-    frequency: int = 0
+    """Known error pattern - for matching and statistics."""
+
+    id: str
+    error_type: str           # ImportError, TypeError, etc.
+    error_keywords: List[str] # Key words from error messages
+    context: str              # Context where this error occurs
+    frequency: int = 0        # How often this pattern is seen
+
+    def matches_error(self, error_type: str, error_message: str) -> bool:
+        """Check if an error matches this pattern."""
+        if self.error_type != error_type:
+            return False
+        # Check keyword overlap
+        message_lower = error_message.lower()
+        return any(kw.lower() in message_lower for kw in self.error_keywords)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "id": self.id,
+            "error_type": self.error_type,
+            "error_keywords": self.error_keywords,
+            "context": self.context,
+            "frequency": self.frequency,
+        }
+
+    @classmethod
+    def from_dict(cls, d: Dict[str, Any]) -> "ErrorPattern":
+        return cls(
+            id=d["id"],
+            error_type=d["error_type"],
+            error_keywords=d["error_keywords"],
+            context=d.get("context", ""),
+            frequency=d.get("frequency", 0),
+        )

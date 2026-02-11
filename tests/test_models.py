@@ -150,3 +150,44 @@ class TestMethodology:
         d = method.to_dict()
         assert d["id"] == "meth_003"
         assert "source_fragment_ids" in d
+
+
+class TestErrorPattern:
+    def test_error_pattern_creation(self):
+        pattern = ErrorPattern(
+            id="err_001",
+            error_type="ImportError",
+            error_keywords=["cannot import", "module", "not found"],
+            context="Python import statement",
+            frequency=42,
+        )
+        assert pattern.id == "err_001"
+        assert pattern.error_type == "ImportError"
+        assert pattern.frequency == 42
+
+    def test_error_pattern_matches(self):
+        pattern = ErrorPattern(
+            id="err_001",
+            error_type="ImportError",
+            error_keywords=["cannot import", "module"],
+            context="Python",
+            frequency=10,
+        )
+        # Should match same error type with overlapping keywords
+        assert pattern.matches_error("ImportError", "cannot import name 'Foo' from module")
+        # Should not match different error type
+        assert not pattern.matches_error("TypeError", "cannot import name 'Foo'")
+        # Should not match if no keyword overlap
+        assert not pattern.matches_error("ImportError", "syntax error in file")
+
+    def test_error_pattern_to_dict(self):
+        pattern = ErrorPattern(
+            id="err_002",
+            error_type="ValueError",
+            error_keywords=["invalid", "value"],
+            context="Test",
+            frequency=5,
+        )
+        d = pattern.to_dict()
+        assert d["id"] == "err_002"
+        assert d["error_type"] == "ValueError"
