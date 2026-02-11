@@ -1,0 +1,62 @@
+{
+  "control_pass_rate": 0.09695290858725762,
+  "treatment_pass_rate": 0.2,
+  "control_tokens": {
+    "n": 1805,
+    "mean": 14388.08864265928,
+    "std": 15096.25241497429,
+    "median": 10500,
+    "ci_lower": 13693.905817174515,
+    "ci_upper": 15139.058171745153
+  },
+  "treatment_tokens": {
+    "n": 1805,
+    "mean": 13667.313019390582,
+    "std": 14820.46981871796,
+    "median": 9500,
+    "ci_lower": 13012.465373961219,
+    "ci_upper": 14405.540166204986
+  },
+  "pass_rate_test": {
+    "test_name": "Chi-square test for pass rates",
+    "statistic": 75.79916779149146,
+    "p_value": 1.1790568521519162e-13,
+    "significant": true,
+    "effect_size": 0.10304709141274239,
+    "confidence_interval": [
+      -0.02326869806094181,
+      0.02105263157894735
+    ],
+    "interpretation": "Pass rate increased by 10.3%"
+  },
+  "token_test": {
+    "test_name": "Mann-Whitney U test for token usage",
+    "statistic": 1557185.0,
+    "p_value": 0.021791346386614396,
+    "significant": false,
+    "effect_size": -0.048183420269919515,
+    "confidence_interval": [
+      -856.2326869806093,
+      962.3268698060947
+    ],
+    "interpretation": "Token usage reduced by 5.0% (negligible effect)"
+  },
+  "loop_test": {
+    "test_name": "Chi-square test for loop rates",
+    "statistic": 1077.8057553956835,
+    "p_value": 0.0,
+    "significant": true,
+    "effect_size": -0.4598337950138504,
+    "confidence_interval": [
+      0,
+      0
+    ],
+    "interpretation": "Loop rate reduced by 100.0%"
+  },
+  "bonferroni_alpha": 0.016666666666666666,
+  "any_significant": true,
+  "recommendations": [
+    "Agent Memory significantly improves pass rate",
+    "Agent Memory significantly reduces loop incidence"
+  ]
+}

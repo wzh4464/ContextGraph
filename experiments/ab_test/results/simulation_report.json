@@ -1,0 +1,76 @@
+{
+  "metadata": {
+    "timestamp": "2026-02-11T11:44:55.233249",
+    "n_trajectories": 1805,
+    "graph_statistics": {
+      "total_processed": 1779,
+      "successful_trajectories": 167,
+      "failed_trajectories": 1612,
+      "with_loops_count": 776,
+      "loop_rate": 0.4813895781637717,
+      "methodologies_extracted": 12,
+      "loop_signatures_extracted": 50,
+      "error_patterns_extracted": 8
+    }
+  },
+  "summary": {
+    "original_success_rate": 0.09695290858725762,
+    "estimated_success_rate": 0.2,
+    "success_rate_improvement": 0.10304709141274238,
+    "intervention_coverage": 0.8027700831024931,
+    "loop_detection_rate": 0.4598337950138504
+  },
+  "steps_analysis": {
+    "total_steps": 51941,
+    "average_steps": 28.77617728531856,
+    "total_steps_saved": 2602,
+    "steps_saved_percentage": 5.009530043703433
+  },
+  "token_analysis": {
+    "total_tokens_estimate": 25970500,
+    "tokens_saved_estimate": 1301000,
+    "token_reduction_percentage": 5.009530043703433
+  },
+  "intervention_analysis": {
+    "total_interventions": 2405,
+    "trajectories_with_interventions": 1449,
+    "average_interventions_per_trajectory": 1.332409972299169,
+    "average_first_intervention_step": 4.142857142857143,
+    "intervention_type_counts": {
+      "loop_warning": 1301,
+      "methodology_match": 1104,
+      "error_pattern": 0,
+      "none": 0
+    }
+  },
+  "loop_analysis": {
+    "trajectories_with_loops": 830,
+    "loop_rate": 0.4598337950138504,
+    "total_loops_detected": 1301
+  },
+  "expected_outcomes": {
+    "expected_pass_at_1": 0.2,
+    "expected_token_reduction": 5.009530043703433,
+    "expected_loop_reduction": 73.73493975903614
+  },
+  "group_metrics": {
+    "group_name": "simulation",
+    "count": 1805,
+    "n_success": 175,
+    "success_rate": 0.09695290858725762,
+    "avg_steps": 28.77617728531856,
+    "median_steps": 21,
+    "total_steps": 51941,
+    "avg_tokens": 14388.08864265928,
+    "total_tokens": 25970500,
+    "n_with_loops": 830,
+    "loop_rate": 0.4598337950138504,
+    "avg_loop_steps_wasted": 0,
+    "n_with_interventions": 1449,
+    "intervention_rate": 0.8027700831024931,
+    "avg_interventions_per_trajectory": 1.332409972299169,
+    "avg_first_intervention_step": 4.142857142857143,
+    "avg_steps_saved": 1.441551246537396,
+    "estimated_improved_success_rate": 0.2
+  }
+}
