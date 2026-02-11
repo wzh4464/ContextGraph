@@ -8,10 +8,16 @@ from agent_memory.evaluation.data_splitter import (
     random_split,
     DataSplit,
 )
+from agent_memory.evaluation.graph_builder import (
+    build_graph,
+    BuildResult,
+)
 
 __all__ = [
     "parse_swe_agent_trajectory",
     "SWEAgentStep",
     "random_split",
     "DataSplit",
+    "build_graph",
+    "BuildResult",
 ]
