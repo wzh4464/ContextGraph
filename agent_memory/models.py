@@ -159,14 +159,55 @@ class State:
 
 @dataclass
 class Methodology:
-    """Placeholder - will be implemented in Task 1.5."""
-    id: str = ""
-    situation: str = ""
-    strategy: str = ""
-    confidence: float = 0.0
+    """Abstracted methodology - learned strategy for a situation."""
+
+    id: str
+    situation: str            # When to apply (natural language)
+    strategy: str             # What to do (natural language)
+    confidence: float         # Confidence score 0-1
     success_count: int = 0
     failure_count: int = 0
     embedding: Optional[List[float]] = None
+    source_fragment_ids: List[str] = field(default_factory=list)
+
+    @property
+    def success_rate(self) -> float:
+        total = self.success_count + self.failure_count
+        return self.success_count / total if total > 0 else 0.0
+
+    def record_outcome(self, success: bool) -> None:
+        """Record the outcome of applying this methodology."""
+        if success:
+            self.success_count += 1
+        else:
+            self.failure_count += 1
+        # Update confidence based on recent outcomes
+        self.confidence = self.success_rate
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "id": self.id,
+            "situation": self.situation,
+            "strategy": self.strategy,
+            "confidence": self.confidence,
+            "success_count": self.success_count,
+            "failure_count": self.failure_count,
+            "embedding": self.embedding,
+            "source_fragment_ids": self.source_fragment_ids,
+        }
+
+    @classmethod
+    def from_dict(cls, d: Dict[str, Any]) -> "Methodology":
+        return cls(
+            id=d["id"],
+            situation=d["situation"],
+            strategy=d["strategy"],
+            confidence=d["confidence"],
+            success_count=d.get("success_count", 0),
+            failure_count=d.get("failure_count", 0),
+            embedding=d.get("embedding"),
+            source_fragment_ids=d.get("source_fragment_ids", []),
+        )
 
 
 @dataclass

@@ -108,3 +108,45 @@ class TestState:
                 current_error="",
                 phase="invalid_phase",
             )
+
+
+class TestMethodology:
+    def test_methodology_creation(self):
+        method = Methodology(
+            id="meth_001",
+            situation="When encountering ImportError in Python package",
+            strategy="1. Check if module exists 2. Verify import path 3. Check __init__.py",
+            confidence=0.85,
+            success_count=17,
+            failure_count=3,
+        )
+        assert method.id == "meth_001"
+        assert method.confidence == 0.85
+        assert method.success_rate == 17 / (17 + 3)
+
+    def test_methodology_update_stats(self):
+        method = Methodology(
+            id="meth_002",
+            situation="Test situation",
+            strategy="Test strategy",
+            confidence=0.5,
+            success_count=5,
+            failure_count=5,
+        )
+        method.record_outcome(success=True)
+        assert method.success_count == 6
+        assert method.failure_count == 5
+
+        method.record_outcome(success=False)
+        assert method.failure_count == 6
+
+    def test_methodology_to_dict(self):
+        method = Methodology(
+            id="meth_003",
+            situation="Test",
+            strategy="Strategy",
+            confidence=0.8,
+        )
+        d = method.to_dict()
+        assert d["id"] == "meth_003"
+        assert "source_fragment_ids" in d
