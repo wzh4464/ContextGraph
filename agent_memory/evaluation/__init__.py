@@ -12,6 +12,11 @@ from agent_memory.evaluation.graph_builder import (
     build_graph,
     BuildResult,
 )
+from agent_memory.evaluation.metrics import (
+    ProblemResult,
+    EvaluationMetrics,
+    calculate_metrics,
+)
 
 __all__ = [
     "parse_swe_agent_trajectory",
@@ -20,4 +25,7 @@ __all__ = [
     "DataSplit",
     "build_graph",
     "BuildResult",
+    "ProblemResult",
+    "EvaluationMetrics",
+    "calculate_metrics",
 ]
