@@ -17,6 +17,11 @@ from agent_memory.evaluation.metrics import (
     EvaluationMetrics,
     calculate_metrics,
 )
+from agent_memory.evaluation.swe_agent_tool import (
+    QueryMemoryTool,
+    QueryMemoryInput,
+    QueryMemoryOutput,
+)
 
 __all__ = [
     "parse_swe_agent_trajectory",
@@ -28,4 +33,7 @@ __all__ = [
     "ProblemResult",
     "EvaluationMetrics",
     "calculate_metrics",
+    "QueryMemoryTool",
+    "QueryMemoryInput",
+    "QueryMemoryOutput",
 ]
