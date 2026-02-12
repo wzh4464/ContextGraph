@@ -1,13 +1,13 @@
 # Agent Memory A/B Testing Experiment - Final Report
 
-**Generated:** 2026-02-11 11:58:27
+**Generated:** 2026-02-12 11:10:24
 
 ## Executive Summary
 
 This experiment evaluated the impact of Agent Memory on SWE-agent performance using trajectory simulation on 1,805 test instances.
 
 **Key Findings:**
-- Pass@1 improved from **9.7%** to **20.0%** (+10.3%)
+- Pass@1 improved from **9.7%** to **20.1%** (+10.4%)
 - Token usage reduced by **5.0%**
 - Loop detection coverage: **80.3%** of trajectories
 
@@ -62,7 +62,7 @@ Built from training trajectories:
 
 | Metric | Control | Treatment (Simulated) | Delta |
 |--------|---------|----------------------|-------|
-| Pass@1 | 9.7% | 20.0% | +10.3% |
+| Pass@1 | 9.7% | 20.1% | +10.4% |
 
 ### 3.2 Resource Usage
 
@@ -70,22 +70,22 @@ Built from training trajectories:
 |--------|-------|
 | Total steps | 51,941 |
 | Average steps | 28.8 |
-| Steps saved (estimated) | 2,602 (5.0%) |
-| Tokens saved (estimated) | 1,301,000 (5.0%) |
+| Steps saved (estimated) | 2,588 (5.0%) |
+| Tokens saved (estimated) | 1,294,000 (5.0%) |
 
 ### 3.3 Intervention Analysis
 
-- **Coverage:** 1449 trajectories (80.3%)
-- **Total interventions:** 2405
+- **Coverage:** 1450 trajectories (80.3%)
+- **Total interventions:** 2402
 - **Avg per trajectory:** 1.33
-- **Avg first intervention:** Step 4.1
+- **Avg first intervention:** Step 4.2
 
 **Intervention Types:**
 
 | Type | Count |
 |------|-------|
-| loop_warning | 1301 |
-| methodology_match | 1104 |
+| loop_warning | 1294 |
+| methodology_match | 1108 |
 
 ## 4. Statistical Analysis
 
@@ -94,16 +94,16 @@ Built from training trajectories:
 ### 4.1 Pass Rate Test
 
 - **Test:** Chi-square test for pass rates
-- **Statistic:** 75.7992
+- **Statistic:** 76.4986
 - **P-value:** 0.0000
 - **Significant:** ✅ Yes
-- **Interpretation:** Pass rate increased by 10.3%
+- **Interpretation:** Pass rate increased by 10.4%
 
 ### 4.2 Token Usage Test
 
 - **Test:** Mann-Whitney U test for token usage
-- **Statistic:** 1557185.0000
-- **P-value:** 0.0218
+- **Statistic:** 1557575.0000
+- **P-value:** 0.0225
 - **Significant:** ❌ No
 - **Effect size (Cohen's d):** -0.048
 - **Interpretation:** Token usage reduced by 5.0% (negligible effect)
@@ -111,7 +111,7 @@ Built from training trajectories:
 ### 4.3 Loop Rate Test
 
 - **Test:** Chi-square test for loop rates
-- **Statistic:** 1077.8058
+- **Statistic:** 1066.0316
 - **P-value:** 0.0000
 - **Significant:** ✅ Yes
 - **Interpretation:** Loop rate reduced by 100.0%
@@ -120,9 +120,9 @@ Built from training trajectories:
 
 | Metric | Expected | Observed | Status |
 |--------|----------|----------|--------|
-| Pass@1 | 13-15% | 20.0% | ✅ Exceeded |
+| Pass@1 | 13-15% | 20.1% | ✅ Exceeded |
 | Token Reduction | 15-25% | 5.0% | ⚠️ Below |
-| Loop Reduction | 15-25% | 36.9% | ✅ Exceeded |
+| Loop Reduction | 15-25% | 36.6% | ✅ Exceeded |
 
 ## 6. Conclusions and Recommendations
 

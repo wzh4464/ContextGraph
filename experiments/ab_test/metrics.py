@@ -6,7 +6,7 @@ experiment outcomes.
 """
 
 from dataclasses import dataclass, field, asdict
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional
 from enum import Enum
 import statistics
 

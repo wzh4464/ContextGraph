@@ -9,16 +9,13 @@ provided guidance.
 import json
 import time
 from dataclasses import dataclass
-from pathlib import Path
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Optional
 
 from .config import ExperimentConfig, get_config
-from .data_splitter import load_split, extract_command_from_text, classify_action
+from .data_splitter import load_split
 from .graph_builder import (
     AgentMemoryGraph,
     Methodology,
-    LoopSignature,
-    ActionStep,
     load_graph,
     parse_trajectory,
     normalize_command,
@@ -130,6 +127,9 @@ class TrajectorySimulator:
 
             # Record loop detection (only count once)
             state.loops_detected += 1
+
+            # Track wasted steps (consecutive repetitions minus the first)
+            state.loop_steps_wasted += consecutive - 1
 
             # Conservative estimate: could save 2-3 steps by early warning
             # (agent would break out of loop earlier)

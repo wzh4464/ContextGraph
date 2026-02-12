@@ -7,8 +7,6 @@ paths, hyperparameters, and experiment settings.
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import List, Optional
-import os
 
 
 @dataclass

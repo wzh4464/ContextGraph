@@ -160,10 +160,10 @@ class TestStratification:
 
         # Check success rate is preserved in both sets
         train_success = sum(1 for id_ in train_ids if id_.startswith("success"))
-        test_success = sum(1 for id_ in test_ids if id_.startswith("failure"))
+        test_success = sum(1 for id_ in test_ids if id_.startswith("success"))
 
         train_rate = train_success / len(train_ids)
-        test_rate = sum(1 for id_ in test_ids if id_.startswith("success")) / len(test_ids)
+        test_rate = test_success / len(test_ids)
 
         # Success rate should be approximately preserved (10% originally)
         assert 0.05 <= train_rate <= 0.15

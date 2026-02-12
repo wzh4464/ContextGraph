@@ -8,12 +8,11 @@ testing for comparing control vs treatment groups.
 import json
 import math
 from dataclasses import dataclass, asdict
-from pathlib import Path
-from typing import Dict, List, Tuple, Optional
+from typing import List, Tuple
 import random
 import statistics
 
-from .config import ExperimentConfig, get_config
+from .config import get_config
 from .metrics import TrajectoryMetrics
 
 
@@ -227,11 +226,11 @@ def bootstrap_ci(
     if len(data) == 0:
         return (0, 0)
 
-    random.seed(seed)
+    rng = random.Random(seed)
     bootstrap_stats = []
 
     for _ in range(n_bootstrap):
-        sample = random.choices(data, k=len(data))
+        sample = rng.choices(data, k=len(data))
         try:
             stat = statistic_fn(sample)
             bootstrap_stats.append(stat)
@@ -250,6 +249,48 @@ def bootstrap_ci(
         bootstrap_stats[max(0, lower_idx)],
         bootstrap_stats[min(len(bootstrap_stats) - 1, upper_idx)]
     )
+
+
+def bootstrap_diff_ci(
+    group_a: List[float],
+    group_b: List[float],
+    n_bootstrap: int = 10000,
+    confidence: float = 0.95,
+    seed: int = 42
+) -> Tuple[float, float]:
+    """
+    Bootstrap confidence interval for difference between two group means.
+
+    Resamples each group independently to preserve group membership.
+
+    Args:
+        group_a: First group data (control)
+        group_b: Second group data (treatment)
+        n_bootstrap: Number of bootstrap samples
+        confidence: Confidence level
+        seed: Random seed
+
+    Returns:
+        (lower_bound, upper_bound) for mean(group_b) - mean(group_a)
+    """
+    if not group_a or not group_b:
+        return (0, 0)
+
+    rng = random.Random(seed)
+    diff_samples = []
+
+    for _ in range(n_bootstrap):
+        sample_a = rng.choices(group_a, k=len(group_a))
+        sample_b = rng.choices(group_b, k=len(group_b))
+        diff = statistics.mean(sample_b) - statistics.mean(sample_a)
+        diff_samples.append(diff)
+
+    diff_samples.sort()
+    alpha = 1 - confidence
+    lower_idx = max(0, int(n_bootstrap * alpha / 2))
+    upper_idx = min(n_bootstrap - 1, int(n_bootstrap * (1 - alpha / 2)) - 1)
+
+    return (diff_samples[lower_idx], diff_samples[upper_idx])
 
 
 def compute_effect_size(
@@ -314,16 +355,14 @@ def analyze_pass_rates(
     # Effect size (difference in proportions)
     effect_size = rate_treatment - rate_control
 
-    # Bootstrap CI for difference
+    # Bootstrap CI for difference (resample groups independently)
     control_success = [1 if m.success else 0 for m in control_metrics]
     treatment_success = [1 if m.success else 0 for m in treatment_metrics]
 
-    def diff_fn(data):
-        mid = len(data) // 2
-        return statistics.mean(data[mid:]) - statistics.mean(data[:mid])
-
-    combined = control_success + treatment_success
-    ci_lower, ci_upper = bootstrap_ci(combined, diff_fn)
+    ci_lower, ci_upper = bootstrap_diff_ci(
+        control_success, treatment_success,
+        n_bootstrap=10000, confidence=0.95, seed=42
+    )
 
     return StatisticalResult(
         test_name="Chi-square test for pass rates",
@@ -369,13 +408,11 @@ def analyze_tokens(
         len(control_tokens), len(treatment_tokens)
     )
 
-    # Bootstrap CI for difference in means
-    def diff_fn(data):
-        mid = len(data) // 2
-        return statistics.mean(data[mid:]) - statistics.mean(data[:mid])
-
-    combined = control_tokens + treatment_tokens
-    ci_lower, ci_upper = bootstrap_ci(combined, diff_fn)
+    # Bootstrap CI for difference in means (resample groups independently)
+    ci_lower, ci_upper = bootstrap_diff_ci(
+        control_tokens, treatment_tokens,
+        n_bootstrap=10000, confidence=0.95, seed=42
+    )
 
     reduction_pct = ((mean_control - mean_treatment) / mean_control * 100
                      if mean_control > 0 else 0)
@@ -602,15 +639,25 @@ def main():
     control_metrics = metrics.copy()
 
     # Create "treatment" metrics (estimated with memory)
+    # Build lookup for trajectories with loop-specific interventions
+    has_loop_intervention = {}
+    for t in trajectories:
+        interventions = t.get("interventions", [])
+        has_loop_intervention[t["instance_id"]] = any(
+            i.get("intervention_type") == "loop_warning" for i in interventions
+        )
+
     treatment_metrics = []
     for m in metrics:
+        # Only zero loops if a loop-specific intervention occurred
+        had_loop_intervention = has_loop_intervention.get(m.instance_id, False)
         t = TrajectoryMetrics(
             instance_id=m.instance_id,
             success=m.estimated_success_with_memory if m.estimated_success_with_memory is not None else m.success,
             total_steps=max(1, m.total_steps - m.estimated_steps_saved),
             total_tokens_estimate=max(500, m.total_tokens_estimate - m.estimated_steps_saved * 500),
-            loops_detected=0 if m.total_interventions > 0 else m.loops_detected,
-            loop_steps_wasted=0,
+            loops_detected=0 if had_loop_intervention else m.loops_detected,
+            loop_steps_wasted=0 if had_loop_intervention else m.loop_steps_wasted,
             total_interventions=m.total_interventions,
         )
         treatment_metrics.append(t)

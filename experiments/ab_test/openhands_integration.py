@@ -6,16 +6,14 @@ into OpenHands agent execution.
 """
 
 import hashlib
-import json
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Callable, Any
+from typing import Dict, List, Optional
 from enum import Enum
 
 from .config import ExperimentConfig, get_config
 from .graph_builder import (
     AgentMemoryGraph,
     Methodology,
-    LoopSignature,
     load_graph,
     normalize_command,
     extract_action_with_target,

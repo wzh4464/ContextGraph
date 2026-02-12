@@ -9,13 +9,11 @@ import json
 from datetime import datetime
 from pathlib import Path
 
-from .config import ExperimentConfig, get_config
+from .config import get_config
 from .data_splitter import load_split
 from .graph_builder import load_graph
 from .simulator import simulate_test_set
 from .metrics import (
-    TrajectoryMetrics,
-    GroupMetrics,
     compute_group_metrics,
     InterventionType,
 )

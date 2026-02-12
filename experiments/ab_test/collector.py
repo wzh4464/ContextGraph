@@ -10,15 +10,13 @@ import time
 from dataclasses import dataclass, field, asdict
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional
 from threading import Lock
-import statistics
 
 from .config import ExperimentConfig, get_config
 from .metrics import (
     TrajectoryMetrics,
     GroupMetrics,
-    ExperimentMetrics,
     InterventionPoint,
     InterventionType,
     estimate_tokens,

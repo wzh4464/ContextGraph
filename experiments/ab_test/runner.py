@@ -7,12 +7,10 @@ coordinating between memory hooks, metrics collection, and
 """
 
 import json
-import time
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Callable, Any
-import random
+from typing import Dict, List, Optional
 
 from .config import ExperimentConfig, get_config
 from .data_splitter import load_split, SplitResult
@@ -28,7 +26,6 @@ from .openhands_integration import (
     assign_experiment_group,
 )
 from .collector import MetricsCollector, create_collector
-from .metrics import InterventionType
 
 
 @dataclass

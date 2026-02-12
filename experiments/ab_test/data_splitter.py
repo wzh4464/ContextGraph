@@ -13,7 +13,7 @@ import re
 from collections import defaultdict
 from dataclasses import dataclass, asdict
 from pathlib import Path
-from typing import Dict, List, Tuple, Optional, Set
+from typing import Dict, List, Tuple, Optional
 import random
 
 from .config import ExperimentConfig, get_config
@@ -42,10 +42,14 @@ class SplitResult:
 
 
 def extract_command_from_text(text: str) -> Optional[str]:
-    """Extract command from AI response text."""
+    """Extract command from AI response text.
+
+    Handles code blocks with optional language tags like ```bash or ```python.
+    """
     if not text:
         return None
-    match = re.search(r'```\n?([^\n]+)', str(text))
+    # Match backticks, optional language tag, newline, then capture the command
+    match = re.search(r'```(?:\w+)?\n([^\n]+)', str(text))
     return match.group(1).strip() if match else None
 
 
@@ -229,7 +233,7 @@ def stratified_split(
     Ensures that each stratum (combination of success, task_type, loop_severity)
     is split proportionally between train and test sets.
     """
-    random.seed(config.split.random_seed)
+    rng = random.Random(config.split.random_seed)
 
     # Group by stratification key
     strata: Dict[str, List[TrajectoryMetadata]] = defaultdict(list)
@@ -242,7 +246,7 @@ def stratified_split(
 
     for stratum_key, items in strata.items():
         # Shuffle within stratum
-        random.shuffle(items)
+        rng.shuffle(items)
 
         # Calculate split point
         n_train = int(len(items) * config.split.train_ratio)
@@ -260,8 +264,8 @@ def stratified_split(
         test_ids.extend([m.instance_id for m in test_items])
 
     # Final shuffle to remove any ordering artifacts
-    random.shuffle(train_ids)
-    random.shuffle(test_ids)
+    rng.shuffle(train_ids)
+    rng.shuffle(test_ids)
 
     return train_ids, test_ids
 
