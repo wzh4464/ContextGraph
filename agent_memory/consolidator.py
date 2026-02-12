@@ -4,6 +4,7 @@ from typing import List, Dict, Any, Optional, TYPE_CHECKING
 import uuid
 import math
 import logging
+import re
 
 from agent_memory.models import Methodology, Fragment
 
@@ -80,38 +81,54 @@ class MemoryConsolidator:
         Abstract methodologies from successful error recovery fragments.
 
         Groups similar fragments and creates methodology from common patterns.
+        Links methodologies to resolved error patterns via RESOLVED_BY edges.
         """
         if not self.store:
             return []
 
-        # Get successful error recovery fragments
+        # Get successful error recovery fragments with associated error patterns
         query = """
         MATCH (t:Trajectory {success: true})-[:HAS_FRAGMENT]->(f:Fragment)
         WHERE f.fragment_type = 'error_recovery'
-        RETURN f
+        OPTIONAL MATCH (f)-[:CAUSED_ERROR]->(e:ErrorPattern)
+        RETURN f, e.error_type as error_type
         ORDER BY f.outcome DESC
         LIMIT 100
         """
 
         results = self.store.execute_query(query)
-        fragments = [Fragment.from_dict(r["f"]) for r in results if "f" in r]
+        fragments_data = []
+        for r in results:
+            if "f" in r:
+                frag = Fragment.from_dict(r["f"])
+                error_type = r.get("error_type") or self._extract_error_type(frag.description)
+                fragments_data.append({"fragment": frag, "error_type": error_type})
 
-        if not fragments:
+        if not fragments_data:
             return []
 
-        # Group by similar descriptions (simple heuristic)
-        groups = self._group_similar_fragments(fragments)
+        # Group by error type first, then by similarity
+        error_groups = self._group_by_error_type(fragments_data)
 
         # Create methodology for each group with enough examples
         new_methodologies = []
-        for group in groups:
-            if len(group) >= 3:  # Minimum 3 examples
-                methodology = self._create_methodology_from_group(group)
+        for error_type, group_data in error_groups.items():
+            fragments = [d["fragment"] for d in group_data]
+            if len(fragments) >= 3:  # Minimum 3 examples
+                methodology = self._create_methodology_from_group(fragments)
                 if methodology:
                     self.store.create_methodology(methodology)
+                    # Create RESOLVED_BY edge to link methodology to error pattern
+                    if error_type and error_type != "Unknown":
+                        self.store.link_methodology_to_error(methodology.id, error_type)
                     new_methodologies.append(methodology)
 
         return new_methodologies
+
+    def _extract_error_type(self, text: str) -> Optional[str]:
+        """Extract error type from text."""
+        match = re.search(r'(\w+Error|\w+Exception)', text)
+        return match.group(1) if match else None
 
     def _group_similar_fragments(
         self,

@@ -184,3 +184,19 @@ class Neo4jStore:
             e.frequency = e.frequency + 1
         """
         self.execute_write(query, error_pattern.to_dict())
+
+    def link_methodology_to_error(
+        self,
+        methodology_id: str,
+        error_type: str,
+    ) -> None:
+        """Create RESOLVED_BY relationship between ErrorPattern and Methodology."""
+        query = """
+        MATCH (e:ErrorPattern {error_type: $error_type})
+        MATCH (m:Methodology {id: $methodology_id})
+        MERGE (e)-[:RESOLVED_BY]->(m)
+        """
+        self.execute_write(query, {
+            "error_type": error_type,
+            "methodology_id": methodology_id,
+        })

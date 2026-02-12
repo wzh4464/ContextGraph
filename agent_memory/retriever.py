@@ -109,16 +109,92 @@ class MemoryRetriever:
         if not self.store:
             return []
 
-        query = """
-        MATCH (t:Trajectory)-[:HAS_FRAGMENT]->(f:Fragment)
-        WHERE t.success = true
-        RETURN f
-        ORDER BY f.outcome DESC
-        LIMIT 10
-        """
+        # Extract repo name from summary if available
+        repo_filter = self._extract_repo_name(repo_summary)
 
-        results = self.store.execute_query(query)
+        # Extract keywords from task description for matching
+        task_keywords = self._extract_keywords(task_description)
+
+        if repo_filter and task_keywords:
+            # Filter by repo and match task keywords in trajectory summary
+            query = """
+            MATCH (t:Trajectory)-[:HAS_FRAGMENT]->(f:Fragment)
+            WHERE t.success = true
+              AND (t.repo CONTAINS $repo OR t.summary CONTAINS $repo)
+              AND ANY(kw IN $keywords WHERE toLower(t.summary) CONTAINS toLower(kw))
+            RETURN f, t.summary as traj_summary
+            ORDER BY f.outcome DESC
+            LIMIT 10
+            """
+            results = self.store.execute_query(query, {
+                "repo": repo_filter,
+                "keywords": task_keywords,
+            })
+        elif repo_filter:
+            # Filter by repo only
+            query = """
+            MATCH (t:Trajectory)-[:HAS_FRAGMENT]->(f:Fragment)
+            WHERE t.success = true
+              AND (t.repo CONTAINS $repo OR t.summary CONTAINS $repo)
+            RETURN f
+            ORDER BY f.outcome DESC
+            LIMIT 10
+            """
+            results = self.store.execute_query(query, {"repo": repo_filter})
+        elif task_keywords:
+            # Filter by task keywords only
+            query = """
+            MATCH (t:Trajectory)-[:HAS_FRAGMENT]->(f:Fragment)
+            WHERE t.success = true
+              AND ANY(kw IN $keywords WHERE toLower(t.summary) CONTAINS toLower(kw))
+            RETURN f
+            ORDER BY f.outcome DESC
+            LIMIT 10
+            """
+            results = self.store.execute_query(query, {"keywords": task_keywords})
+        else:
+            # Fallback to generic query
+            query = """
+            MATCH (t:Trajectory)-[:HAS_FRAGMENT]->(f:Fragment)
+            WHERE t.success = true
+            RETURN f
+            ORDER BY f.outcome DESC
+            LIMIT 10
+            """
+            results = self.store.execute_query(query)
+
         return [self._dict_to_fragment(r["f"]) for r in results if "f" in r]
+
+    def _extract_repo_name(self, repo_summary: str) -> Optional[str]:
+        """Extract repository name from repo summary."""
+        if not repo_summary:
+            return None
+        # Try to extract owner/repo format
+        match = re.search(r'([a-zA-Z0-9_-]+/[a-zA-Z0-9_-]+)', repo_summary)
+        if match:
+            return match.group(1)
+        # Return first significant word as fallback
+        words = repo_summary.split()
+        return words[0] if words else None
+
+    def _extract_keywords(self, text: str, max_keywords: int = 5) -> List[str]:
+        """Extract meaningful keywords from text."""
+        if not text:
+            return []
+        # Remove common stop words and extract significant terms
+        stop_words = {"the", "a", "an", "in", "on", "at", "to", "for", "of", "is", "are", "was", "were", "and", "or", "but"}
+        words = re.findall(r'\b[a-zA-Z_][a-zA-Z0-9_]*\b', text.lower())
+        keywords = [w for w in words if w not in stop_words and len(w) > 2]
+        # Return unique keywords
+        seen = set()
+        unique = []
+        for w in keywords:
+            if w not in seen:
+                seen.add(w)
+                unique.append(w)
+                if len(unique) >= max_keywords:
+                    break
+        return unique
 
     def by_state(self, state: State) -> List[Methodology]:
         """Retrieve methodologies applicable to current state."""
