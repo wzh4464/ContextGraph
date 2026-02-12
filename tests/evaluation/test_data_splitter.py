@@ -1,8 +1,7 @@
 """Tests for data splitter."""
 
 import pytest
-from pathlib import Path
-from agent_memory.evaluation.data_splitter import random_split, DataSplit
+from agent_memory.evaluation.data_splitter import random_split
 
 
 class TestRandomSplit:
@@ -54,3 +53,20 @@ class TestRandomSplit:
 
         assert len(split.train) == 7
         assert len(split.test) == 3
+
+    def test_invalid_ratio_raises(self, tmp_path):
+        """Test ratio validation."""
+        files = [tmp_path / "one.traj"]
+        files[0].touch()
+
+        with pytest.raises(ValueError):
+            random_split(files, ratio=-0.1, seed=42)
+
+        with pytest.raises(ValueError):
+            random_split(files, ratio=1.1, seed=42)
+
+    def test_empty_files_returns_empty_split(self):
+        """Test empty input handling."""
+        split = random_split([], ratio=0.5, seed=42)
+        assert split.train == []
+        assert split.test == []

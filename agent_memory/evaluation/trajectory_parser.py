@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Dict, Any, Optional
+from typing import Optional
 import json
 import re
 
@@ -29,7 +29,7 @@ def parse_swe_agent_trajectory(path: Path) -> RawTrajectory:
     Returns:
         RawTrajectory ready for ingestion into Agent Memory
     """
-    with open(path, "r") as f:
+    with open(path, "r", encoding="utf-8") as f:
         data = json.load(f)
 
     # Extract instance_id from filename (e.g., "django__django-12345.traj")
@@ -40,7 +40,7 @@ def parse_swe_agent_trajectory(path: Path) -> RawTrajectory:
 
     # Check success from exit_status
     info = data.get("info", {})
-    exit_status = info.get("exit_status", "")
+    exit_status = data.get("exit_status") or info.get("exit_status", "")
     success = exit_status == "submitted"
 
     # Parse trajectory steps

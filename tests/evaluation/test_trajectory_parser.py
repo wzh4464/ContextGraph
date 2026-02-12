@@ -1,6 +1,5 @@
 """Tests for SWE-agent trajectory parser."""
 
-import pytest
 from agent_memory.evaluation.trajectory_parser import (
     parse_swe_agent_trajectory,
     SWEAgentStep,
@@ -89,3 +88,16 @@ class TestParseSWEAgentTrajectory:
         result = parse_swe_agent_trajectory(traj_file)
 
         assert result.repo == "scikit-learn/scikit-learn"
+
+    def test_parse_top_level_exit_status(self, tmp_path):
+        """Test parsing success when exit_status exists at top-level."""
+        traj_file = tmp_path / "psf__requests-5432.traj"
+        traj_file.write_text('''{
+            "environment": "swe_main",
+            "exit_status": "submitted",
+            "trajectory": []
+        }''')
+
+        result = parse_swe_agent_trajectory(traj_file)
+
+        assert result.success is True

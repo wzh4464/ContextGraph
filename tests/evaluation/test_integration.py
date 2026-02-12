@@ -1,10 +1,7 @@
 """Integration tests for evaluation module."""
 
-import pytest
-from pathlib import Path
 from agent_memory import AgentMemory
 from agent_memory.evaluation import (
-    parse_swe_agent_trajectory,
     random_split,
     build_graph,
     calculate_metrics,

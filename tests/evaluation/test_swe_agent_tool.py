@@ -1,6 +1,5 @@
 """Tests for SWE-agent query_memory tool."""
 
-import pytest
 from agent_memory.evaluation.swe_agent_tool import (
     QueryMemoryTool,
     QueryMemoryInput,
@@ -29,6 +28,7 @@ class TestQueryMemoryTool:
         assert "name" in schema
         assert "parameters" in schema
         assert "current_error" in schema["parameters"]["properties"]
+        assert "locating" in schema["parameters"]["properties"]["phase"]["enum"]
         memory.close()
 
     def test_tool_invoke(self):
@@ -39,7 +39,7 @@ class TestQueryMemoryTool:
         input_data = QueryMemoryInput(
             current_error="ImportError: No module named 'foo'",
             task_description="Fix import error",
-            phase="fixing",
+            phase="locating",
         )
 
         output = tool.invoke(input_data)

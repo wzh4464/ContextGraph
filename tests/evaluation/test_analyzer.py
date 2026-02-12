@@ -1,6 +1,5 @@
 """Tests for results analyzer."""
 
-import pytest
 from agent_memory.evaluation.metrics import ProblemResult, EvaluationMetrics, calculate_metrics
 from agent_memory.evaluation.analyzer import (
     compare_results,
@@ -70,3 +69,28 @@ class TestCompareResults:
 
         assert "pass@1" in summary.lower()
         assert "improvement" in summary.lower() or "%" in summary
+
+    def test_report_summary_negative_changes(self):
+        """Test summary wording for negative token/efficiency changes."""
+        control = EvaluationMetrics(
+            pass_at_1=0.5,
+            pass_at_3=0.7,
+            pass_at_5=0.8,
+            total_problems=10,
+            avg_tokens_per_problem=1000,
+            avg_attempts_to_success=2.0,
+        )
+        treatment = EvaluationMetrics(
+            pass_at_1=0.5,
+            pass_at_3=0.7,
+            pass_at_5=0.8,
+            total_problems=10,
+            avg_tokens_per_problem=1100,
+            avg_attempts_to_success=2.5,
+        )
+
+        report = compare_results(control, treatment)
+        summary = report.to_summary()
+
+        assert "increase" in summary.lower()
+        assert "degradation" in summary.lower()

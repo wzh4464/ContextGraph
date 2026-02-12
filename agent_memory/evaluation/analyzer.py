@@ -41,16 +41,19 @@ class ComparisonReport:
             "TOKEN CONSUMPTION:",
             f"  Control avg: {self.control.avg_tokens_per_problem:.0f} tokens",
             f"  Treatment avg: {self.treatment.avg_tokens_per_problem:.0f} tokens",
-            f"  Reduction: {self.token_reduction:.1%}",
+            f"  {self._fmt_token_change()}",
             "",
             "EFFICIENCY (attempts to first success):",
         ]
 
-        if self.control.avg_attempts_to_success and self.treatment.avg_attempts_to_success:
+        if (
+            self.control.avg_attempts_to_success is not None
+            and self.treatment.avg_attempts_to_success is not None
+        ):
             lines.extend([
                 f"  Control avg: {self.control.avg_attempts_to_success:.1f} attempts",
                 f"  Treatment avg: {self.treatment.avg_attempts_to_success:.1f} attempts",
-                f"  Improvement: {self.efficiency_gain:.1f} fewer attempts",
+                f"  {self._fmt_efficiency_change()}",
             ])
         else:
             lines.append("  (insufficient data)")
@@ -68,6 +71,22 @@ class ComparisonReport:
             return f"+{change:.1%}"
         else:
             return f"{change:.1%}"
+
+    def _fmt_token_change(self) -> str:
+        """Format token change with reduction/increase wording."""
+        if self.token_reduction > 0:
+            return f"Reduction: {self.token_reduction:.1%}"
+        if self.token_reduction < 0:
+            return f"Increase: {abs(self.token_reduction):.1%}"
+        return "No change: 0.0%"
+
+    def _fmt_efficiency_change(self) -> str:
+        """Format attempt change with improvement/degradation wording."""
+        if self.efficiency_gain > 0:
+            return f"Improvement: {self.efficiency_gain:.1f} fewer attempts"
+        if self.efficiency_gain < 0:
+            return f"Degradation: {abs(self.efficiency_gain):.1f} more attempts"
+        return "No change in attempts"
 
 
 def compare_results(
@@ -96,7 +115,10 @@ def compare_results(
         token_reduction = 0.0
 
     # Efficiency gain (fewer attempts)
-    if control.avg_attempts_to_success and treatment.avg_attempts_to_success:
+    if (
+        control.avg_attempts_to_success is not None
+        and treatment.avg_attempts_to_success is not None
+    ):
         efficiency_gain = control.avg_attempts_to_success - treatment.avg_attempts_to_success
     else:
         efficiency_gain = 0.0

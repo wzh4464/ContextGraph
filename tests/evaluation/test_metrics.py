@@ -3,7 +3,6 @@
 import pytest
 from agent_memory.evaluation.metrics import (
     ProblemResult,
-    EvaluationMetrics,
     calculate_metrics,
 )
 
@@ -50,6 +49,15 @@ class TestProblemResult:
             tokens=[500],
         )
         assert result.total_tokens == 500
+
+    def test_mismatched_attempts_and_tokens_raises(self):
+        """Test validation for attempts/tokens length mismatch."""
+        with pytest.raises(ValueError):
+            ProblemResult(
+                problem_id="test-invalid",
+                attempts=[True, False],
+                tokens=[100],
+            )
 
 
 class TestCalculateMetrics:

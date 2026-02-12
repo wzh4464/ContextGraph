@@ -16,7 +16,7 @@ class QueryMemoryInput:
 
     current_error: str
     task_description: str
-    phase: str  # exploring | understanding | fixing | verifying
+    phase: str  # exploring | understanding | locating | fixing | verifying
 
 
 @dataclass
@@ -88,7 +88,14 @@ class QueryMemoryTool:
                     },
                     "phase": {
                         "type": "string",
-                        "enum": ["exploring", "understanding", "fixing", "verifying"],
+                        "enum": [
+                            "exploring",
+                            "understanding",
+                            "locating",
+                            "fixing",
+                            "verifying",
+                            "testing",
+                        ],
                         "description": "Current phase of problem solving",
                     },
                 },
@@ -110,8 +117,10 @@ class QueryMemoryTool:
         phase_map = {
             "exploring": "understanding",
             "understanding": "understanding",
+            "locating": "locating",
             "fixing": "fixing",
             "verifying": "testing",
+            "testing": "testing",
         }
         mapped_phase = phase_map.get(input_data.phase, "fixing")
 

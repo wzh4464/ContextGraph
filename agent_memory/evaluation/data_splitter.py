@@ -38,8 +38,13 @@ def random_split(
     Returns:
         DataSplit with train and test file lists
     """
+    if not 0 <= ratio <= 1:
+        raise ValueError(f"ratio must be between 0 and 1, got {ratio}")
+
     # Copy list to avoid modifying original
     files = list(files)
+    if not files:
+        return DataSplit(train=[], test=[])
 
     # Shuffle with fixed seed
     rng = random.Random(seed)

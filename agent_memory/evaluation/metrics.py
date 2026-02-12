@@ -12,6 +12,13 @@ class ProblemResult:
     attempts: List[bool]  # Success/fail for each attempt
     tokens: List[int]     # Tokens used per attempt
 
+    def __post_init__(self) -> None:
+        if len(self.attempts) != len(self.tokens):
+            raise ValueError(
+                "attempts and tokens must have the same length, "
+                f"got {len(self.attempts)} and {len(self.tokens)}"
+            )
+
     @property
     def pass_at_1(self) -> bool:
         return len(self.attempts) > 0 and self.attempts[0]

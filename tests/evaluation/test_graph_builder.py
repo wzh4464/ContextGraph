@@ -1,7 +1,5 @@
 """Tests for graph builder."""
 
-import pytest
-from pathlib import Path
 from agent_memory.evaluation.graph_builder import build_graph
 from agent_memory import AgentMemory
 
