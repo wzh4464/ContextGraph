@@ -76,7 +76,7 @@ class Neo4jStore:
             # Uniqueness constraints
             "CREATE CONSTRAINT trajectory_id IF NOT EXISTS FOR (t:Trajectory) REQUIRE t.id IS UNIQUE",
             "CREATE CONSTRAINT fragment_id IF NOT EXISTS FOR (f:Fragment) REQUIRE f.id IS UNIQUE",
-            "CREATE CONSTRAINT state_id IF NOT EXISTS FOR (s:State) REQUIRE s.id IS UNIQUE",
+            # Note: State nodes are not persisted with id field, so no constraint needed
             "CREATE CONSTRAINT methodology_id IF NOT EXISTS FOR (m:Methodology) REQUIRE m.id IS UNIQUE",
             "CREATE CONSTRAINT error_pattern_id IF NOT EXISTS FOR (e:ErrorPattern) REQUIRE e.id IS UNIQUE",
 
@@ -181,6 +181,6 @@ class Neo4jStore:
             e.frequency = $frequency
         ON MATCH SET
             e.error_keywords = e.error_keywords + [kw IN $error_keywords WHERE NOT kw IN e.error_keywords],
-            e.frequency = e.frequency + 1
+            e.frequency = e.frequency + $frequency
         """
         self.execute_write(query, error_pattern.to_dict())

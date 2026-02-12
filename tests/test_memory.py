@@ -1,6 +1,5 @@
 """Tests for AgentMemory unified API."""
 
-import pytest
 from agent_memory.memory import AgentMemory, MemoryContext, MemoryStats
 from agent_memory.models import State
 

@@ -1,7 +1,6 @@
 """Tests for embedding client."""
 
-import pytest
-from agent_memory.embeddings import EmbeddingClient, get_embedding_client
+from agent_memory.embeddings import get_embedding_client
 
 
 class TestEmbeddingClient:

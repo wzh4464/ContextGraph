@@ -1,6 +1,5 @@
 """Tests for MemoryRetriever."""
 
-import pytest
 from agent_memory.retriever import MemoryRetriever, RetrievalResult
 from agent_memory.models import State, Methodology
 
@@ -22,10 +21,11 @@ class TestMemoryRetriever:
         """Test error-based query generation."""
         retriever = MemoryRetriever(store=None, embedder=None)
 
-        query = retriever._build_error_query("ImportError", "cannot import name")
+        query, params = retriever._build_error_query("ImportError")
 
-        assert "ImportError" in query
+        assert "error_type" in query
         assert "ErrorPattern" in query or "Methodology" in query
+        assert params.get("error_type") == "ImportError"
 
     def test_retrieval_result_is_empty(self):
         """Test RetrievalResult.is_empty method."""

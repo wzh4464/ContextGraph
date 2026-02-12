@@ -5,7 +5,7 @@ from typing import List, Dict, Any, Optional, TYPE_CHECKING
 import re
 import logging
 
-from agent_memory.models import State, Methodology, Fragment, ErrorPattern
+from agent_memory.models import State, Methodology, Fragment
 
 if TYPE_CHECKING:
     from agent_memory.neo4j_store import Neo4jStore
@@ -92,12 +92,10 @@ class MemoryRetriever:
         if not self.store:
             return []
 
-        query = self._build_error_query(
-            error_type=self._extract_error_type(error_message),
-            error_message=error_message,
-        )
+        error_type = self._extract_error_type(error_message)
+        query, params = self._build_error_query(error_type)
 
-        results = self.store.execute_query(query)
+        results = self.store.execute_query(query, params)
         return [self._dict_to_methodology(r["m"]) for r in results if "m" in r]
 
     def by_task(
@@ -112,12 +110,19 @@ class MemoryRetriever:
         query = """
         MATCH (t:Trajectory)-[:HAS_FRAGMENT]->(f:Fragment)
         WHERE t.success = true
+          AND (
+            toLower(coalesce(t.summary, '')) CONTAINS toLower($task_description)
+            OR toLower(coalesce(t.repo, '')) CONTAINS toLower($repo_summary)
+          )
         RETURN f
         ORDER BY f.outcome DESC
         LIMIT 10
         """
 
-        results = self.store.execute_query(query)
+        results = self.store.execute_query(query, {
+            "task_description": task_description.split()[0] if task_description else "",
+            "repo_summary": repo_summary.split()[0] if repo_summary else "",
+        })
         return [self._dict_to_fragment(r["f"]) for r in results if "f" in r]
 
     def by_state(self, state: State) -> List[Methodology]:
@@ -165,23 +170,25 @@ class MemoryRetriever:
             logger.warning(f"Semantic search failed: {e}")
             return []
 
-    def _build_error_query(self, error_type: Optional[str], error_message: str) -> str:
+    def _build_error_query(self, error_type: Optional[str]) -> tuple:
         """Build Cypher query for error-based retrieval."""
         if error_type:
-            return f"""
-            MATCH (e:ErrorPattern {{error_type: '{error_type}'}})-[:RESOLVED_BY]->(m:Methodology)
+            query = """
+            MATCH (e:ErrorPattern {error_type: $error_type})-[:RESOLVED_BY]->(m:Methodology)
             RETURN m
             ORDER BY m.confidence DESC
             LIMIT 5
             """
+            return query, {"error_type": error_type}
         else:
-            return """
+            query = """
             MATCH (m:Methodology)
             WHERE m.situation CONTAINS 'error'
             RETURN m
             ORDER BY m.confidence DESC
             LIMIT 5
             """
+            return query, {}
 
     def _extract_error_type(self, error_message: str) -> Optional[str]:
         """Extract error type from message."""
