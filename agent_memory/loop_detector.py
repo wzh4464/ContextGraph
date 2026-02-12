@@ -95,8 +95,7 @@ class LoopDetector:
 
     def _build_signature(self, state: "State") -> LoopSignature:
         """Build a LoopSignature from a State."""
-        # Extract action type from the state
-        action_type = getattr(state, "last_action_type", "unknown")
+        action_type = state.last_action_type or "unknown"
 
         # Extract error info
         error_category = "None"

@@ -67,6 +67,7 @@ class MemoryWriter:
         # 3. Extract error patterns
         observations = [s.get("observation", "") for s in raw.steps]
         error_patterns = self._extract_error_patterns(observations)
+        fragment_error_types = self._map_fragment_error_types(fragments, raw.steps)
 
         # 4. Generate embeddings
         if self.embedder:
@@ -81,6 +82,9 @@ class MemoryWriter:
                 self.store.create_fragment(frag, traj_id)
             for pattern in error_patterns:
                 self.store.create_error_pattern(pattern)
+            for fragment_id, error_types in fragment_error_types.items():
+                for error_type in error_types:
+                    self.store.link_fragment_to_error_pattern(fragment_id, error_type)
 
         logger.info(f"Wrote trajectory {traj_id} with {len(fragments)} fragments")
         return traj_id
@@ -229,6 +233,28 @@ class MemoryWriter:
             ))
 
         return patterns
+
+    def _map_fragment_error_types(
+        self,
+        fragments: List[Fragment],
+        steps: List[Dict[str, Any]],
+    ) -> Dict[str, List[str]]:
+        """Map each fragment id to detected error types from its step range."""
+        mapping: Dict[str, List[str]] = {}
+
+        for fragment in fragments:
+            start, end = fragment.step_range
+            error_types = []
+            seen = set()
+            for step in steps[start:end + 1]:
+                error_type = self._extract_error_type(step.get("observation", ""))
+                if error_type and error_type not in seen:
+                    seen.add(error_type)
+                    error_types.append(error_type)
+            if error_types:
+                mapping[fragment.id] = error_types
+
+        return mapping
 
     def _extract_error_type(self, text: str) -> Optional[str]:
         """Extract error type from text."""

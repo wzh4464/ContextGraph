@@ -120,8 +120,8 @@ class MemoryRetriever:
         """
 
         results = self.store.execute_query(query, {
-            "task_description": task_description.split()[0] if task_description else "",
-            "repo_summary": repo_summary.split()[0] if repo_summary else "",
+            "task_description": self._normalize_query_text(task_description),
+            "repo_summary": self._normalize_query_text(repo_summary),
         })
         return [self._dict_to_fragment(r["f"]) for r in results if "f" in r]
 
@@ -194,6 +194,12 @@ class MemoryRetriever:
         """Extract error type from message."""
         match = re.search(r'(\w+Error|\w+Exception)', error_message)
         return match.group(1) if match else None
+
+    def _normalize_query_text(self, text: str, max_len: int = 200) -> str:
+        """Normalize query text used in CONTAINS matching."""
+        if not text:
+            return ""
+        return " ".join(text.split()).lower()[:max_len]
 
     def _dedupe_and_rank(
         self,

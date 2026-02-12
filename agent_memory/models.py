@@ -110,6 +110,7 @@ class State:
     task_description: str     # c. Task description
     current_error: str        # d. Current error message (empty if no error)
     phase: str                # understanding / locating / fixing / testing
+    last_action_type: str = "unknown"  # Last action category used by loop detection
     embedding: Optional[List[float]] = None
 
     VALID_PHASES = frozenset(["understanding", "locating", "fixing", "testing"])
@@ -141,6 +142,7 @@ class State:
             "repo_summary": self.repo_summary,
             "task_description": self.task_description,
             "current_error": self.current_error,
+            "last_action_type": self.last_action_type,
             "phase": self.phase,
             "embedding": self.embedding,
         }
@@ -152,6 +154,7 @@ class State:
             repo_summary=d["repo_summary"],
             task_description=d["task_description"],
             current_error=d.get("current_error", ""),
+            last_action_type=d.get("last_action_type", "unknown"),
             phase=d["phase"],
             embedding=d.get("embedding"),
         )

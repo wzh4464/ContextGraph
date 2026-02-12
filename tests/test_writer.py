@@ -43,6 +43,50 @@ class TestMemoryWriter:
         import_errors = [p for p in patterns if p.error_type == "ImportError"]
         assert len(import_errors) >= 1
 
+    def test_has_error_matches_python_style_errors(self):
+        """Test _has_error catches standard Python Error/Exception patterns."""
+        writer = MemoryWriter(store=None, embedder=None)
+
+        assert writer._has_error("ImportError: cannot import name Foo")
+        assert writer._has_error("TypeError: expected int")
+        assert writer._has_error("ValueError: invalid value")
+
+    def test_write_trajectory_links_fragment_to_error_patterns(self):
+        """Test write_trajectory creates Fragment->ErrorPattern relations."""
+        calls = []
+
+        class DummyStore:
+            def create_trajectory(self, trajectory):
+                calls.append(("trajectory", trajectory.id))
+
+            def create_fragment(self, fragment, trajectory_id):
+                calls.append(("fragment", fragment.id, trajectory_id))
+
+            def create_error_pattern(self, pattern):
+                calls.append(("error_pattern", pattern.error_type))
+
+            def link_fragment_to_error_pattern(self, fragment_id, error_type):
+                calls.append(("link", fragment_id, error_type))
+
+        writer = MemoryWriter(store=DummyStore(), embedder=None)
+        raw = RawTrajectory(
+            instance_id="test__test-456",
+            repo="test/repo",
+            success=False,
+            steps=[
+                {"action": "edit", "observation": "ImportError: cannot import name Foo"},
+                {"action": "edit", "observation": "ImportError: cannot import name Foo"},
+                {"action": "edit", "observation": "TypeError: expected int, got str"},
+            ],
+        )
+
+        writer.write_trajectory(raw)
+
+        link_calls = [c for c in calls if c[0] == "link"]
+        linked_error_types = {c[2] for c in link_calls}
+        assert "ImportError" in linked_error_types
+        assert "TypeError" in linked_error_types
+
     def test_generate_summary(self):
         """Test summary generation."""
         writer = MemoryWriter(store=None, embedder=None)

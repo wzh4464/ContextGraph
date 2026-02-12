@@ -184,3 +184,12 @@ class Neo4jStore:
             e.frequency = e.frequency + $frequency
         """
         self.execute_write(query, error_pattern.to_dict())
+
+    def link_fragment_to_error_pattern(self, fragment_id: str, error_type: str) -> None:
+        """Create CAUSED_ERROR relation from Fragment to ErrorPattern."""
+        query = """
+        MATCH (f:Fragment {id: $fragment_id})
+        MATCH (e:ErrorPattern {error_type: $error_type})
+        MERGE (f)-[:CAUSED_ERROR]->(e)
+        """
+        self.execute_write(query, {"fragment_id": fragment_id, "error_type": error_type})

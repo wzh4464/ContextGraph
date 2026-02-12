@@ -48,8 +48,8 @@ class TestAgentMemory:
                     task_description="Test",
                     current_error="ImportError: cannot import X",
                     phase="fixing",
+                    last_action_type="edit",
                 )
-                state.last_action_type = "edit"
                 states.append(state)
 
             loop_info = memory.check_loop(states)

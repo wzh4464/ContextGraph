@@ -38,6 +38,7 @@ class TestAgentMemoryIntegration:
                 task_description="Fix another bug",
                 current_error="SyntaxError: invalid syntax",
                 phase="fixing",
+                last_action_type="edit",
             )
 
             context = memory.query(state)
@@ -47,8 +48,6 @@ class TestAgentMemoryIntegration:
 
             # 3. Check for loop
             state_history = [state for _ in range(5)]
-            for s in state_history:
-                s.last_action_type = "edit"
 
             loop_info = memory.check_loop(state_history)
             assert loop_info is not None

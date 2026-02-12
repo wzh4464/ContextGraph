@@ -68,8 +68,8 @@ class TestLoopDetector:
                 task_description="Fix bug",
                 current_error="ImportError: cannot import name 'Foo' from module",
                 phase="fixing",
+                last_action_type="edit",
             )
-            state.last_action_type = "edit"  # Add action type
             states.append(state)
 
         loop_info = detector.detect(states)
@@ -97,8 +97,8 @@ class TestLoopDetector:
                 task_description="Test",
                 current_error=error,
                 phase="fixing",
+                last_action_type="edit",
             )
-            state.last_action_type = "edit"
             states.append(state)
 
         loop_info = detector.detect(states)
@@ -114,8 +114,8 @@ class TestLoopDetector:
             task_description="Test",
             current_error="ImportError: cannot import 'Foo'",
             phase="fixing",
+            last_action_type="edit",
         )
-        state1.last_action_type = "edit"
 
         state2 = State(
             tools=["bash"],
@@ -123,8 +123,8 @@ class TestLoopDetector:
             task_description="Test",
             current_error="ImportError: cannot import 'Bar'",
             phase="fixing",
+            last_action_type="edit",
         )
-        state2.last_action_type = "edit"
 
         assert detector.is_same_predicament(state1, state2)
 
@@ -135,8 +135,8 @@ class TestLoopDetector:
             task_description="Test",
             current_error="TypeError: invalid type",
             phase="fixing",
+            last_action_type="edit",
         )
-        state3.last_action_type = "edit"
 
         assert not detector.is_same_predicament(state1, state3)
 
@@ -152,9 +152,28 @@ class TestLoopDetector:
                 task_description="Test",
                 current_error="ImportError: x",
                 phase="fixing",
+                last_action_type="edit",
             )
-            state.last_action_type = "edit"
             states.append(state)
+
+        loop_info = detector.detect(states)
+        assert loop_info is None
+
+    def test_no_loop_when_action_type_changes(self):
+        """Test action type is part of the loop signature."""
+        detector = LoopDetector(min_repeat=3)
+        states = []
+        actions = ["edit", "search", "edit", "search", "edit"]
+
+        for action in actions:
+            states.append(State(
+                tools=["bash"],
+                repo_summary="Test",
+                task_description="Test",
+                current_error="ImportError: cannot import X",
+                phase="fixing",
+                last_action_type=action,
+            ))
 
         loop_info = detector.detect(states)
         assert loop_info is None

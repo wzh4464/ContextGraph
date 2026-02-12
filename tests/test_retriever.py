@@ -61,3 +61,23 @@ class TestMemoryRetriever:
 
         result = retriever.retrieve(state)
         assert result.is_empty()
+
+    def test_by_task_uses_full_query_inputs(self):
+        """Test by_task passes normalized full text to query parameters."""
+        captured = {}
+
+        class DummyStore:
+            def execute_query(self, query, parameters=None):
+                captured["query"] = query
+                captured["parameters"] = parameters or {}
+                return []
+
+        retriever = MemoryRetriever(store=DummyStore(), embedder=None)
+        retriever.by_task(
+            task_description="Fix import error in parser module",
+            repo_summary="A python parser repository",
+        )
+
+        params = captured["parameters"]
+        assert params["task_description"] == "fix import error in parser module"
+        assert params["repo_summary"] == "a python parser repository"
