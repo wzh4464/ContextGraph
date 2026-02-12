@@ -7,25 +7,64 @@ coordinating between memory hooks, metrics collection, and
 """
 
 import json
+import sys
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from .config import ExperimentConfig, get_config
-from .data_splitter import load_split, SplitResult
-from .graph_builder import (
-    AgentMemoryGraph,
-    load_graph,
-    parse_trajectory,
-)
-from .openhands_integration import (
-    MemoryHooks,
-    AgentState,
-    ExperimentGroup,
-    assign_experiment_group,
-)
-from .collector import MetricsCollector, create_collector
+if __package__ in (None, ""):
+    repo_root = Path(__file__).resolve().parents[2]
+    if str(repo_root) not in sys.path:
+        sys.path.insert(0, str(repo_root))
+    from experiments.ab_test.config import ExperimentConfig, get_config
+    from experiments.ab_test.data_splitter import load_split, SplitResult
+    from experiments.ab_test.graph_builder import (
+        AgentMemoryGraph,
+        load_graph,
+        parse_trajectory,
+        normalize_command,
+    )
+    from experiments.ab_test.openhands_integration import (
+        MemoryHooks,
+        AgentState,
+        ExperimentGroup,
+        assign_experiment_group,
+    )
+    from experiments.ab_test.collector import MetricsCollector, create_collector
+else:
+    from .config import ExperimentConfig, get_config
+    from .data_splitter import load_split, SplitResult
+    from .graph_builder import (
+        AgentMemoryGraph,
+        load_graph,
+        parse_trajectory,
+        normalize_command,
+    )
+    from .openhands_integration import (
+        MemoryHooks,
+        AgentState,
+        ExperimentGroup,
+        assign_experiment_group,
+    )
+    from .collector import MetricsCollector, create_collector
+
+
+def _detect_loop_lengths(commands: List[str], min_repeat: int) -> List[int]:
+    """Return wasted-step counts for each consecutive repeated-command loop."""
+    if len(commands) < min_repeat:
+        return []
+
+    loop_lengths: List[int] = []
+    i = 0
+    while i < len(commands):
+        count = 1
+        while i + count < len(commands) and commands[i + count] == commands[i]:
+            count += 1
+        if count >= min_repeat:
+            loop_lengths.append(count - 1)
+        i += count
+    return loop_lengths
 
 
 @dataclass
@@ -205,7 +244,7 @@ class ExperimentRunner:
             return
 
         # Parse trajectory
-        steps, success, inst_id = parse_trajectory(data)
+        steps, success, _ = parse_trajectory(data)
         if len(steps) < 3:
             return
 
@@ -213,8 +252,17 @@ class ExperimentRunner:
         meta = self.split.test_metadata.get(instance_id, {})
         task_category = meta.get("task_type", "bug_fix")
 
+        # Record loop metrics for both groups from replayed trajectory.
+        normalized_commands = [normalize_command(step.command) for step in steps]
+        loop_lengths = _detect_loop_lengths(
+            normalized_commands,
+            self.config.loop_detection.min_repeat,
+        )
+
         # Start tracking
         self.collector.start_trajectory(instance_id, group)
+        for loop_length in loop_lengths:
+            self.collector.record_loop(instance_id, loop_length)
 
         # Create memory hooks for treatment group
         hooks = None
@@ -231,16 +279,17 @@ class ExperimentRunner:
             step_success = True  # Assume success unless error
 
             if hooks and state:
+                state.step_number = step.step_num
+
                 # Treatment: Check for interventions
+                prev_intervention_count = len(state.interventions)
                 context = hooks.pre_action_hook(state, step.command)
 
                 if not context.is_empty():
                     self.collector.record_warning(instance_id)
 
-                    # Record interventions
-                    for intervention in state.interventions:
-                        if intervention.step_number == state.step_number:
-                            self.collector.record_intervention(instance_id, intervention)
+                for intervention in state.interventions[prev_intervention_count:]:
+                    self.collector.record_intervention(instance_id, intervention)
 
                 hooks.post_action_hook(state, step.command, "simulated result")
 
@@ -339,6 +388,9 @@ def main():
             mode=args.mode,
             verbose=not args.quiet
         )
+    if not results:
+        print("\nExperiment setup failed; no results to report.")
+        sys.exit(1)
 
     # Print final results
     print("\n" + "=" * 60)

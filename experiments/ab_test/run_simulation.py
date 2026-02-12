@@ -112,6 +112,7 @@ def generate_simulation_report(
     }
 
     # Save report
+    output_path.parent.mkdir(parents=True, exist_ok=True)
     with open(output_path, 'w') as f:
         json.dump(report, f, indent=2)
 
@@ -194,10 +195,16 @@ def main():
         config,
         verbose=True
     )
+    if not results:
+        print("\nNo trajectories were simulated successfully; skipping report generation.")
+        return
 
     # Generate report
     output_path = config.paths.results_dir / "simulation_report.json"
     report = generate_simulation_report(results, graph.statistics, output_path)
+    if not report:
+        print("\nSimulation report is empty; skipping summary output.")
+        return
 
     print(f"\nReport saved to: {output_path}")
 
@@ -206,6 +213,7 @@ def main():
 
     # Save per-trajectory metrics
     trajectory_output = config.paths.results_dir / "simulation_trajectories.json"
+    trajectory_output.parent.mkdir(parents=True, exist_ok=True)
     with open(trajectory_output, 'w') as f:
         json.dump([m.to_dict() for m in results], f, indent=2)
     print(f"Trajectory metrics saved to: {trajectory_output}")

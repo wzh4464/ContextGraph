@@ -2,23 +2,41 @@
 Tests for the data splitter module.
 """
 
-import json
 import tempfile
 from pathlib import Path
-import pytest
 
-from .config import ExperimentConfig, PathConfig, SplitConfig
+from .config import ExperimentConfig, PathConfig
 from .data_splitter import (
     TrajectoryMetadata,
+    extract_command_from_text,
     detect_loop_severity,
     categorize_task,
     create_stratification_key,
     stratified_split,
     compute_split_statistics,
-    split_trajectories,
     save_split,
     load_split,
 )
+
+
+class TestCommandExtraction:
+    """Tests for command extraction from code blocks."""
+
+    def test_extract_plain_code_block(self):
+        text = "```\nsearch_dir \"foo\"\n```"
+        assert extract_command_from_text(text) == 'search_dir "foo"'
+
+    def test_extract_language_tagged_code_block(self):
+        assert extract_command_from_text("```bash\npytest -q\n```") == "pytest -q"
+        assert extract_command_from_text("```python\npython -m pytest\n```") == "python -m pytest"
+
+    def test_ignore_malformed_or_multiline_blocks(self):
+        assert extract_command_from_text("```bash pytest -q```") is None
+        assert extract_command_from_text("```bash\nline1\nline2\n```") is None
+
+    def test_extract_multiline_edit_block(self):
+        text = "```\nedit 1:1\nfoo\nend_of_edit\n```"
+        assert extract_command_from_text(text) == "edit 1:1"
 
 
 class TestLoopDetection:
@@ -76,6 +94,38 @@ class TestLoopDetection:
         assert has_loop
         assert severity == "severe"
         assert length == 12
+
+    def test_two_repeats_not_a_loop(self):
+        """Exactly two repeats should not trigger default min_repeat=3."""
+        trajectory = [
+            {"role": "ai", "text": "```\nsearch_dir \"foo\"\n```"},
+            {"role": "user", "text": "no results"},
+            {"role": "ai", "text": "```\nsearch_dir \"foo\"\n```"},
+            {"role": "user", "text": "no results"},
+        ]
+        has_loop, severity, length = detect_loop_severity(trajectory)
+        assert not has_loop
+        assert severity == "none"
+        assert length == 0
+
+    def test_multiple_loops_use_longest_for_severity(self):
+        """When multiple loops exist, severity is based on the longest loop."""
+        trajectory = []
+        for _ in range(3):
+            trajectory.append({"role": "ai", "text": "```\nsearch_dir \"foo\"\n```"})
+            trajectory.append({"role": "user", "text": "none"})
+
+        trajectory.append({"role": "ai", "text": "```\nopen a.py\n```"})
+        trajectory.append({"role": "user", "text": "content"})
+
+        for _ in range(6):
+            trajectory.append({"role": "ai", "text": "```\nedit 1:1\nx\nend_of_edit\n```"})
+            trajectory.append({"role": "user", "text": "syntax error"})
+
+        has_loop, severity, length = detect_loop_severity(trajectory)
+        assert has_loop
+        assert severity == "moderate"
+        assert length == 6
 
 
 class TestTaskCategorization:
@@ -222,7 +272,3 @@ class TestSaveLoad:
             assert loaded is not None
             assert loaded.train_ids == ["a", "b", "c"]
             assert loaded.test_ids == ["d", "e"]
-
-
-if __name__ == "__main__":
-    pytest.main([__file__, "-v"])

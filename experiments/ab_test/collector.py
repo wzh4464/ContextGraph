@@ -55,7 +55,10 @@ class LiveTrajectoryMetrics:
 
     # Loop metrics
     loop_count: int = 0
-    loop_steps: int = 0
+    loop_steps_wasted: int = 0
+
+    # Counterfactual estimate from interventions
+    estimated_steps_saved: int = 0
 
     # Token estimate
     total_tokens_estimate: int = 0
@@ -159,9 +162,7 @@ class MetricsCollector:
                     "confidence": intervention.confidence,
                     "details": intervention.details,
                 })
-                if intervention.intervention_type == InterventionType.LOOP_WARNING:
-                    metrics.loop_count += 1
-                    metrics.loop_steps += intervention.potential_steps_saved
+                metrics.estimated_steps_saved += intervention.potential_steps_saved
 
     def record_loop(self, instance_id: str, loop_length: int):
         """Record a detected loop."""
@@ -169,7 +170,7 @@ class MetricsCollector:
             if instance_id in self.active:
                 metrics = self.active[instance_id]
                 metrics.loop_count += 1
-                metrics.loop_steps += loop_length
+                metrics.loop_steps_wasted += loop_length
 
     def complete_trajectory(
         self,
@@ -231,7 +232,8 @@ class MetricsCollector:
                     interventions=[],
                     total_interventions=len(m.interventions),
                     loops_detected=m.loop_count,
-                    loop_steps_wasted=m.loop_steps,
+                    loop_steps_wasted=m.loop_steps_wasted,
+                    estimated_steps_saved=m.estimated_steps_saved,
                 )
                 trajectory_metrics.append(tm)
 
@@ -322,7 +324,7 @@ def example_collection():
         print(f"\nProcessing {instance_id} ({group.value})")
 
         # Start trajectory
-        metrics = collector.start_trajectory(instance_id, group)
+        collector.start_trajectory(instance_id, group)
 
         # Simulate some steps
         import random

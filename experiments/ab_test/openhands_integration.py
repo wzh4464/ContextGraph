@@ -311,7 +311,7 @@ class MemoryHooks:
             if current[i] == target[i]:
                 matches += 1
 
-        return matches / len(target)
+        return matches / compare_len if compare_len > 0 else 0.0
 
     def _check_error_patterns(self, state: AgentState) -> List[str]:
         """Check for known error patterns and generate warnings."""

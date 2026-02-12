@@ -13,7 +13,7 @@ import re
 from collections import defaultdict
 from dataclasses import dataclass, asdict
 from pathlib import Path
-from typing import Dict, List, Tuple, Optional
+from typing import Any, Dict, List, Tuple, Optional
 import random
 
 from .config import ExperimentConfig, get_config
@@ -38,7 +38,7 @@ class SplitResult:
     test_ids: List[str]
     train_metadata: Dict[str, dict]
     test_metadata: Dict[str, dict]
-    split_statistics: Dict[str, any]
+    split_statistics: Dict[str, Any]
 
 
 def extract_command_from_text(text: str) -> Optional[str]:
@@ -48,9 +48,28 @@ def extract_command_from_text(text: str) -> Optional[str]:
     """
     if not text:
         return None
-    # Match backticks, optional language tag, newline, then capture the command
-    match = re.search(r'```(?:\w+)?\n([^\n]+)', str(text))
-    return match.group(1).strip() if match else None
+    # Match full fenced block and parse command from first line.
+    block_match = re.search(r'```(?:\w+)?\n(.*?)\n```', str(text), flags=re.DOTALL)
+    if not block_match:
+        return None
+
+    lines = block_match.group(1).splitlines()
+    if not lines:
+        return None
+
+    command = lines[0].strip()
+    if not command:
+        return None
+
+    # Allow standard single-line commands.
+    if len(lines) == 1:
+        return command
+
+    # Allow multiline edit blocks that terminate correctly.
+    if command.startswith("edit ") and lines[-1].strip() == "end_of_edit":
+        return command
+
+    return None
 
 
 def classify_action(command: str) -> Tuple[str, Optional[str]]:
@@ -59,6 +78,7 @@ def classify_action(command: str) -> Tuple[str, Optional[str]]:
         return ("unknown", None)
 
     command = command.strip()
+    command_lower = command.lower()
 
     # Search actions
     if command.startswith(("search_dir", "search_file", "find_file", "grep", "rg", "find ")):
@@ -78,11 +98,12 @@ def classify_action(command: str) -> Tuple[str, Optional[str]]:
     if command.startswith("create"):
         return ("create", None)
 
+    if "pytest" in command_lower or re.search(r"\btest\b", command_lower):
+        return ("test", None)
+
     # Execute actions
     if command.startswith(("python", "bash")):
         return ("execute", None)
-    if "test" in command.lower() or "pytest" in command:
-        return ("test", None)
 
     # Submit
     if command == "submit":
@@ -414,7 +435,7 @@ def load_split(config: Optional[ExperimentConfig] = None) -> Optional[SplitResul
     with open(splits_file, 'r') as f:
         data = json.load(f)
 
-    # Convert back to TrajectoryMetadata
+    # Metadata remains dictionaries in persisted split format.
     train_metadata = {}
     for id_, meta_dict in data.get("train_metadata", {}).items():
         train_metadata[id_] = meta_dict

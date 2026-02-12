@@ -241,13 +241,14 @@ def bootstrap_ci(
         return (0, 0)
 
     bootstrap_stats.sort()
+    n_valid = len(bootstrap_stats)
     alpha = 1 - confidence
-    lower_idx = int(n_bootstrap * alpha / 2)
-    upper_idx = int(n_bootstrap * (1 - alpha / 2))
+    lower_idx = max(0, min(n_valid - 1, int(n_valid * alpha / 2)))
+    upper_idx = max(0, min(n_valid - 1, int(n_valid * (1 - alpha / 2)) - 1))
 
     return (
-        bootstrap_stats[max(0, lower_idx)],
-        bootstrap_stats[min(len(bootstrap_stats) - 1, upper_idx)]
+        bootstrap_stats[lower_idx],
+        bootstrap_stats[upper_idx]
     )
 
 
@@ -669,6 +670,7 @@ def main():
     print_analysis_report(report)
 
     # Save report
+    config.paths.results_dir.mkdir(parents=True, exist_ok=True)
     output_file = config.paths.results_dir / "statistical_analysis.json"
     with open(output_file, 'w') as f:
         json.dump({

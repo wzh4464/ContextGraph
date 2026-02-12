@@ -12,7 +12,7 @@ import re
 from collections import defaultdict
 from dataclasses import dataclass, field, asdict
 from pathlib import Path
-from typing import Dict, List, Tuple, Optional
+from typing import Any, Dict, List, Tuple, Optional
 import hashlib
 
 from .config import ExperimentConfig, get_config
@@ -91,7 +91,7 @@ class AgentMemoryGraph:
     methodologies: Dict[str, Methodology] = field(default_factory=dict)
     loop_signatures: Dict[str, LoopSignature] = field(default_factory=dict)
     error_patterns: Dict[str, ErrorPattern] = field(default_factory=dict)
-    statistics: Dict[str, any] = field(default_factory=dict)
+    statistics: Dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self):
         return {

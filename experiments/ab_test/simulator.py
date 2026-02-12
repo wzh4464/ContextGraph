@@ -112,10 +112,17 @@ class TrajectorySimulator:
             else:
                 break
 
-        # Trigger warning at the threshold point (not every step after)
+        # Trigger warning at the threshold point; keep counting wasted
+        # steps for longer loops without emitting duplicate interventions.
         warning_threshold = min_repeat
+        if consecutive < warning_threshold:
+            return None
 
-        # Only trigger once when we hit exactly the threshold
+        if consecutive > warning_threshold:
+            state.loop_steps_wasted += 1
+            return None
+
+        # consecutive == warning_threshold
         if consecutive == warning_threshold:
             # Check if this matches a known problematic pattern
             confidence = 0.5  # Base confidence
@@ -349,6 +356,10 @@ def main():
     print("=" * 50)
 
     n = len(results)
+    if n == 0:
+        print("\nNo trajectories were successfully simulated.")
+        return
+
     n_success = sum(1 for r in results if r.success)
     n_with_interventions = sum(1 for r in results if r.total_interventions > 0)
     n_with_loops = sum(1 for r in results if r.loops_detected > 0)
