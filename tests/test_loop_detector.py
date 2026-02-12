@@ -1,7 +1,6 @@
 """Tests for loop detection based on error consistency."""
 
-import pytest
-from agent_memory.loop_detector import LoopSignature, LoopDetector, LoopInfo
+from agent_memory.loop_detector import LoopSignature, LoopDetector
 from agent_memory.models import State
 
 

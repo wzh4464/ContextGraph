@@ -6,9 +6,9 @@ import logging
 
 from agent_memory.models import State, Methodology, Fragment
 from agent_memory.neo4j_store import Neo4jStore
-from agent_memory.embeddings import get_embedding_client, EmbeddingClient
+from agent_memory.embeddings import get_embedding_client
 from agent_memory.writer import MemoryWriter, RawTrajectory
-from agent_memory.retriever import MemoryRetriever, RetrievalResult
+from agent_memory.retriever import MemoryRetriever
 from agent_memory.consolidator import MemoryConsolidator
 from agent_memory.loop_detector import LoopDetector, LoopInfo
 

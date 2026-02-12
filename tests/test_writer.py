@@ -1,8 +1,6 @@
 """Tests for MemoryWriter."""
 
-import pytest
 from agent_memory.writer import MemoryWriter, RawTrajectory
-from agent_memory.models import Trajectory, Fragment
 
 
 class TestMemoryWriter:

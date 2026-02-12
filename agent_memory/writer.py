@@ -1,12 +1,12 @@
 """Memory Writer - incremental trajectory ingestion."""
 
-from dataclasses import dataclass, field
-from typing import List, Dict, Any, Optional, Tuple, TYPE_CHECKING
+from dataclasses import dataclass
+from typing import List, Dict, Any, Optional, TYPE_CHECKING
 import re
 import uuid
 import logging
 
-from agent_memory.models import Trajectory, Fragment, State, ErrorPattern
+from agent_memory.models import Trajectory, Fragment, ErrorPattern
 
 if TYPE_CHECKING:
     from agent_memory.neo4j_store import Neo4jStore
@@ -183,15 +183,21 @@ class MemoryWriter:
 
     def _has_error(self, observation: str) -> bool:
         """Check if observation indicates an error."""
-        error_patterns = [
-            r'\bError\b',
-            r'\bException\b',
-            r'\bFailed\b',
-            r'\bfailed\b',
-            r'\bTraceback\b',
-            r'\bERROR\b',
-        ]
-        return any(re.search(p, observation) for p in error_patterns)
+        # Match Python-style errors (e.g. ImportError:, TypeError, ValueError)
+        # as well as generic error keywords
+        error_pattern = re.compile(
+            r'('
+            r'\w+(Error|Exception)\b:?'  # e.g. ImportError:, TypeError, ValueError
+            r'|\bError\b'                # standalone "Error"
+            r'|\bException\b'            # standalone "Exception"
+            r'|\bFailed\b'               # "Failed"
+            r'|\bfailed\b'               # "failed"
+            r'|\bTraceback\b'            # "Traceback"
+            r'|\bERROR\b'                # "ERROR"
+            r')',
+            re.IGNORECASE,
+        )
+        return bool(error_pattern.search(observation))
 
     def _extract_error_patterns(self, observations: List[str]) -> List[ErrorPattern]:
         """Extract error patterns from observations."""

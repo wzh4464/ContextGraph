@@ -109,6 +109,8 @@ class MemoryConsolidator:
                 methodology = self._create_methodology_from_group(group)
                 if methodology:
                     self.store.create_methodology(methodology)
+                    # Create RESOLVED_BY edges from ErrorPatterns to this Methodology
+                    self._link_methodology_to_errors(methodology, group)
                     new_methodologies.append(methodology)
 
         return new_methodologies
@@ -223,6 +225,27 @@ class MemoryConsolidator:
             source_fragment_ids=[f.id for f in group],
         )
 
+    def _link_methodology_to_errors(
+        self,
+        methodology: Methodology,
+        fragments: List[Fragment],
+    ) -> None:
+        """Create RESOLVED_BY edges from ErrorPatterns to Methodology."""
+        if not self.store:
+            return
+
+        # Link methodology to error patterns associated with its source fragments
+        query = """
+        MATCH (f:Fragment)-[:CAUSED_ERROR]->(e:ErrorPattern)
+        WHERE f.id IN $fragment_ids
+        MATCH (m:Methodology {id: $methodology_id})
+        MERGE (e)-[:RESOLVED_BY]->(m)
+        """
+        self.store.execute_write(query, {
+            "fragment_ids": [f.id for f in fragments],
+            "methodology_id": methodology.id,
+        })
+
     def _merge_similar_nodes(self, similarity_threshold: float = 0.9) -> int:
         """Merge nodes that are very similar to reduce redundancy."""
         if not self.store:
@@ -281,8 +304,9 @@ class MemoryConsolidator:
         MATCH (m:Methodology)
         WHERE m.confidence < 0.2
           AND m.success_count + m.failure_count > 5
-        DELETE m
-        RETURN count(m) as cnt
+        WITH m, count(m) as cnt
+        DETACH DELETE m
+        RETURN cnt
         """
 
         try:

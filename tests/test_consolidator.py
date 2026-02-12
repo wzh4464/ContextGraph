@@ -2,7 +2,6 @@
 
 import pytest
 from agent_memory.consolidator import MemoryConsolidator
-from agent_memory.models import Fragment, Methodology
 
 
 class TestMemoryConsolidator:

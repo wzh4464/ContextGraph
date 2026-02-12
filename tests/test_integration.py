@@ -1,6 +1,5 @@
 """Integration tests for complete AgentMemory workflow."""
 
-import pytest
 from agent_memory import (
     AgentMemory,
     State,
